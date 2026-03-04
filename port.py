@@ -1,5 +1,4 @@
 from flask import Flask, request, render_template_string
-import subprocess
 
 app = Flask(__name__)
 
@@ -33,7 +32,7 @@ def home():
         if target not in ALLOWED_TARGETS:
             result = "❌ Bu hedefe izin verilmiyor!"
         else:
-            # Gerçek nmap yerine demo çıktı
+            # Demo çıktı
             result = f"""
 Starting Demo Scan on {target}
 
