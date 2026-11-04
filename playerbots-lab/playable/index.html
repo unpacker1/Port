@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>Playerbots Lab — Oynanabilir Prototip</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101924;color:#f2ead6;font:15px system-ui,sans-serif}header{padding:10px 14px;background:#182635;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}#game{display:block;width:min(100vw,900px);height:auto;margin:auto;background:#30513a;touch-action:none;border:2px solid #6d8261}#ui{max-width:900px;margin:auto;padding:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}button{background:#31485a;color:white;border:1px solid #9aa8a9;border-radius:8px;padding:12px;touch-action:none}button:active{background:#67825a}#pad{display:grid;grid-template-columns:repeat(3,55px);gap:3px}#pad button{height:48px;padding:0}#msg{min-height:42px;flex:1 1 240px}#stats{font-weight:bold}small{color:#bac6cb}
+</style></head><body><header><strong>Playerbots Lab — Mini RPG</strong><span id="stats"></span></header>
+<canvas id="game" width="800" height="480" aria-label="Oyun alanı"></canvas>
+<div id="ui"><div id="pad"><span></span><button data-key="ArrowUp">▲</button><span></span><button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button></div><button id="attack">⚔ Saldır</button><button id="talk">💬 NPC / Market</button><button id="potion">🧪 İksir</button><button id="reset">↺ Sıfırla</button><div id="msg" role="status"></div></div>
+<div style="max-width:900px;margin:auto;padding:8px"><small>Telefon: yön tuşlarıyla hareket et. Bilgisayar: WASD / ok tuşları, boşluk saldırı, E NPC, H iksir. Bu, orijinal Metin2 istemcisi veya gerçek AUTH/DB/GAME değildir; tamamen bağımsız çevrimdışı oynanabilir prototiptir.</small></div>
+<script>
+"use strict";
+const W=800,H=480,canvas=document.querySelector("#game"),ctx=canvas.getContext("2d"),keys=new Set();
+const $=s=>document.querySelector(s);
+const initial=()=>({x:90,y:240,hp:100,gold:0,xp:0,level:1,potions:2,kills:0});
+let p=initial(),mobs=[],notice="Köy koruyucusuna yaklaş; E ile konuş. Kurtları yen, altın kazan.",noticeUntil=0,last=performance.now(),spawnTimer=0,attackCooldown=0;
+try{const saved=JSON.parse(localStorage.getItem("playerbots-mini-v1")||"null");if(saved&&Number.isFinite(saved.x)&&Number.isFinite(saved.hp))p={...initial(),...saved,x:Math.max(20,Math.min(780,saved.x)),y:Math.max(20,Math.min(460,saved.y))};}catch(e){}
+const npc={x:150,y:130};
+function say(s){notice=s;noticeUntil=performance.now()+4500;$("#msg").textContent=s}
+function spawn(){const x=340+Math.random()*400,y=45+Math.random()*385;mobs.push({x,y,hp:36,max:36,cool:0})}
+for(let i=0;i<5;i++)spawn();
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function attack(){if(attackCooldown>0||p.hp<=0)return;attackCooldown=.42;let hit=0;for(const m of mobs){if(m.hp>0&&dist(p,m)<73){m.hp-=22+p.level*4;hit++;if(m.hp<=0){p.gold+=12;p.xp+=10;p.kills++;if(p.xp>=p.level*30){p.xp=0;p.level++;p.hp=100;say("Seviye atladın! Seviye "+p.level)}else say("Kurt yenildi! +12 altın, +10 XP");}}}if(!hit)say("Yakında saldırılacak kurt yok.")}
+function talk(){if(dist(p,npc)>85){say("Market için köy koruyucusuna yaklaş.");return}if(p.gold>=20){p.gold-=20;p.potions++;say("20 altına bir can iksiri aldın.")}else say("Koruyucu: Kurtları yen, 20 altın getir; iksir vereyim.")}
+function potion(){if(p.potions<1){say("İksirin yok. Koruyucudan satın al.");return}if(p.hp>=100){say("Canın zaten dolu.");return}p.potions--;p.hp=Math.min(100,p.hp+45);say("Can +45")}
+function reset(){p=initial();mobs=[];for(let i=0;i<5;i++)spawn();localStorage.removeItem("playerbots-mini-v1");say("Yeni oyun başladı.")}
+$("#attack").onclick=attack;$("#talk").onclick=talk;$("#potion").onclick=potion;$("#reset").onclick=reset;
+for(const b of document.querySelectorAll("[data-key]")){const k=b.dataset.key;b.addEventListener("pointerdown",e=>{e.preventDefault();keys.add(k);b.setPointerCapture(e.pointerId)});for(const ev of ["pointerup","pointercancel","lostpointercapture"])b.addEventListener(ev,()=>keys.delete(k))}
+window.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(e.repeat)return;if(e.key===" ")attack();if(e.key.toLowerCase()==="e")talk();if(e.key.toLowerCase()==="h")potion()});
+window.addEventListener("keyup",e=>keys.delete(e.key.toLowerCase()));
+function circle(x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle="#31543b";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#547453";ctx.lineWidth=1;for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ctx.fillStyle="#9a8761";ctx.fillRect(35,82,240,100);ctx.fillStyle="#665c48";ctx.fillRect(60,95,190,68);
+circle(npc.x,npc.y,17,"#f1d46a");ctx.fillStyle="white";ctx.fillText("Koruyucu / Market",npc.x-60,npc.y-26);
+for(const m of mobs){if(m.hp<=0)continue;circle(m.x,m.y,15,"#b44d47");ctx.fillStyle="#171717";ctx.fillRect(m.x-19,m.y-24,38,5);ctx.fillStyle="#e85b51";ctx.fillRect(m.x-19,m.y-24,38*Math.max(0,m.hp/m.max),5)}
+circle(p.x,p.y,15,p.hp>0?"#5ca8e6":"#777");circle(p.x-4,p.y-4,4,"#fff");ctx.fillStyle="#fff";ctx.fillText("Sen",p.x-10,p.y-24);
+ctx.fillStyle="#152d26";ctx.fillRect(8,8,240,24);ctx.fillStyle="#d45b53";ctx.fillRect(12,12,232*p.hp/100,16);ctx.fillStyle="white";ctx.fillText("Can "+Math.ceil(p.hp)+"/100",20,25);
+}
+let saveAt=0;function tick(now){const dt=Math.min(.05,(now-last)/1000);last=now;attackCooldown=Math.max(0,attackCooldown-dt);if(p.hp>0){let dx=0,dy=0;if(keys.has("arrowleft")||keys.has("a"))dx--;if(keys.has("arrowright")||keys.has("d"))dx++;if(keys.has("arrowup")||keys.has("w"))dy--;if(keys.has("arrowdown")||keys.has("s"))dy++;const norm=Math.hypot(dx,dy)||1;p.x=Math.max(16,Math.min(W-16,p.x+dx/norm*180*dt));p.y=Math.max(16,Math.min(H-16,p.y+dy/norm*180*dt));for(const m of mobs){if(m.hp<=0)continue;const d=dist(p,m);if(d<220&&d>27){m.x+=(p.x-m.x)/d*35*dt;m.y+=(p.y-m.y)/d*35*dt}m.cool-=dt;if(d<31&&m.cool<=0){p.hp=Math.max(0,p.hp-9);m.cool=1.2;if(p.hp===0)say("Yenildin. Sıfırla ile yeniden başla.")}}}
+spawnTimer+=dt;if(spawnTimer>4){spawnTimer=0;mobs=mobs.filter(m=>m.hp>0);if(mobs.length<6)spawn()}
+$("#stats").textContent="Lv "+p.level+" | Altın "+p.gold+" | XP "+p.xp+" | İksir "+p.potions+" | Kurt "+p.kills;
+if(now>noticeUntil&&noticeUntil>0){noticeUntil=0;$("#msg").textContent="Kurtlara yaklaş, saldır. Marketten iksir al."}
+if(now-saveAt>3000){saveAt=now;try{localStorage.setItem("playerbots-mini-v1",JSON.stringify(p))}catch(e){}}
+draw();requestAnimationFrame(tick)}
+say(notice);requestAnimationFrame(tick);
+</script></body></html>
