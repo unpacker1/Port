@@ -15,8 +15,14 @@
                                  |
                                MariaDB
 
-İSTENEN (mevcut değil):
-Android Chrome -> WebClient -> [WebSocket / protokol adaptörü] -> AUTH/GAME
+ESKİ SÜRÜMDE KAYNAĞI BULUNAN KÖPRÜ (yalnızca loopback sahte GAME testi geçti):
+Android Chrome -> [eksik eski WASM WebClient] -> WebSocket /to/host:port
+                                                  |
+                                 python ws2tcp.py byte relay
+                                                  |
+                                         TCP -> AUTH/GAME
+
+Gerçek Chrome istemcisi, WebClient WASM/veri ve AUTH/GAME ARM64 runtime HENÜZ YOK.
 ```
 
 **Kaynaklar:** `upstream/linux-port/overlays/playerbot/src/game/src/`, `upstream/linux-port-mt2009/docker/`, `upstream/artifacts.json`, `upstream/README_TR.md`.
@@ -32,7 +38,15 @@ Android Chrome -> WebClient -> [WebSocket / protokol adaptörü] -> AUTH/GAME
 | Veri | `docker/mariadb/playerbot`, `sql/` | seed ve kalıcı karakterler |
 | Sunucu derlemesi | `linux-port-mt2009/docker/game/Dockerfile` | Linux/i386, `-m32`, harici engine kaynakları gerekir |
 | Güncel istemci | `update-manifest-mt2009.json` main | Windows x64 ve native EXE gerekiyor |
-| WebClient | `artifacts.json` | eski referans var ama motor yayımlanmıyor veya desteklenmiyor |
+| Eski WebSocket köprüsü | `linux-port/docker/wsbridge/bin/ws2tcp.py` | /ping, /ports ve /to/{host}:{port} köprüsü; localhost sahte-TCP echo testi geçti |
+| Eski WebClient araçları | `wasm-port/scripts/`, `linux-port/package-web-client.sh` | Eski WASM üretim/düzeltme betikleri var; bitmiş engine/corpus ZIP mevcut değil |
+| Güncel WebClient | `artifacts.json` main | yeni sürüm resmen desteklenmiyor |
+
+## Köprü hakkında önemli ayrım
+
+`ws2tcp.py` gelen WebSocket binary payload'unu sabit `TARGET_HOST` üzerinde izin verilen TCP portuna geçirir. **Oyunun native AUTH/GAME protokolünü dönüştürmez, şifrelemeyi sonlandırmaz.** Köprü, kamuya açık bir sunucuda veri tabanı/P2P portlarını iletmeyecek şekilde tasarlanmıştır. Orijinal `linux-port/docker/wsbridge/README.md` güvenlik ayarlarını açıklar; buradaki testler dağıtım güvenliği onayı değildir.
+
+İzole altı test gerçek Python WebSocket sunucu el sıkışması, port kısıtları, RFC 6455 maskeli frame, /ping ve sahte TCP echo çağrısını doğruladı: [GitHub CI #41876840784](https://github.com/unpacker1/Port/actions/runs/41876840784). Gerçek native sunucu ve Chrome oyun istemcisi denenmedi.
 
 ## ARM64 portunun ön koşulları
 

@@ -16,6 +16,7 @@ Bu depoda **çalışan Android oyunu, sunucu ikilisi, Windows EXE, oyun veri ar�
     tools/run_cpp_tests.py           14 bağımsız C++ test hedefi
     tools/run_client_tests.py        Seçilmiş Python ve shell testleri
     tools/audit.py                   Gerçek kaynak envanteri + engel taraması
+    tools/test_wsbridge.py           Eski WS/TCP köprüsü lokal sahte GAME testi
     ARCHITECTURE_TR.md               Bağımlılıklar ve paket sınırları
     STATUS_TR.md                     Doğrulanmış sonuçlar ve yol haritası
     NOTICE_TR.md                     Lisans ve dağıtım sınırları
@@ -25,6 +26,8 @@ Bu depoda **çalışan Android oyunu, sunucu ikilisi, Windows EXE, oyun veri ar�
 ## Bulutta otomatik test
 [Actions sekmesi](https://github.com/unpacker1/Port/actions/workflows/tieruyt-playerbots-audit.yml) üzerinden `Run workflow` kullanılabilir. İş akışı yalnızca bu proje dalında çalışır. Kaynak ve testler GitHub runner içinde alınır, telefonunuza bir şey kurulmaz.
 
+**Sürekli test:** [Altı saatte bir GitHub Actions](https://github.com/unpacker1/Port/blob/main/.github/workflows/playerbots-periodic-ci.yml) (varsayılan dal, UTC saat 00:23 / 06:23 / 12:23 / 18:23). [İş takip panosu](https://github.com/unpacker1/Port/issues/1).
+
 ```bash
 git clone --branch tieruyt-playerbots-arm64-web-audit --recurse-submodules \
   https://github.com/unpacker1/Port.git playerbots-arm64-web-lab
@@ -32,6 +35,7 @@ cd playerbots-arm64-web-lab
 python3 playerbots-lab/tools/audit.py --upstream playerbots-lab/upstream --report-dir reports
 python3 playerbots-lab/tools/run_cpp_tests.py --upstream playerbots-lab/upstream --report-dir reports
 python3 playerbots-lab/tools/run_client_tests.py --upstream playerbots-lab/upstream --report-dir reports
+python3 playerbots-lab/tools/test_wsbridge.py --upstream playerbots-lab/upstream --report-dir reports
 ```
 C++ testleri için `g++`, istemci testleri için `python3` ve `sh` gerekir; bu, **yalnızca laboratuvarın testlerini** çalıştırır. Tam oyun çalıştırmaz.
 
@@ -42,6 +46,8 @@ C++ testleri için `g++`, istemci testleri için `python3` ve `sh` gerekir; bu, 
 - Portlama: `upstream/linux-port-mt2009/port/playerbotify.py`
 - r41023 Docker: `upstream/linux-port-mt2009/docker/game/Dockerfile`
 - Eski testler: `upstream/tests/playerbot_*_test.cpp`
+- Eski WS/TCP köprüsü: `upstream/linux-port/docker/wsbridge/bin/ws2tcp.py`
+- WebClient WASM paketleme: `upstream/linux-port/package-web-client.sh` (motor ve veri ZIP dosyaları repoda yok)
 
 ## Temel güvenlik ilkeleri
 - Orijinal kullanıcı projelerine, private repolara, SQL hesaplarına ve Termux dosyalarına dokunulmaz.
