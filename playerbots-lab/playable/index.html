@@ -23,7 +23,7 @@ function talk(){if(dist(p,npc)>85){say("Market için köy koruyucusuna yaklaş."
 function potion(){if(p.potions<1){say("İksirin yok. Koruyucudan satın al.");return}if(p.hp>=100){say("Canın zaten dolu.");return}p.potions--;p.hp=Math.min(100,p.hp+45);say("Can +45")}
 function reset(){p=initial();mobs=[];for(let i=0;i<5;i++)spawn();localStorage.removeItem("playerbots-mini-v1");say("Yeni oyun başladı.")}
 $("#attack").onclick=attack;$("#talk").onclick=talk;$("#potion").onclick=potion;$("#reset").onclick=reset;
-for(const b of document.querySelectorAll("[data-key]")){const k=b.dataset.key;b.addEventListener("pointerdown",e=>{e.preventDefault();keys.add(k);b.setPointerCapture(e.pointerId)});for(const ev of ["pointerup","pointercancel","lostpointercapture"])b.addEventListener(ev,()=>keys.delete(k))}
+for(const b of document.querySelectorAll("[data-key]")){const k=b.dataset.key.toLowerCase();b.addEventListener("pointerdown",e=>{e.preventDefault();keys.add(k);b.setPointerCapture(e.pointerId)});for(const ev of ["pointerup","pointercancel","lostpointercapture"])b.addEventListener(ev,()=>keys.delete(k))}
 window.addEventListener("keydown",e=>{if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key))e.preventDefault();keys.add(e.key.toLowerCase());if(e.repeat)return;if(e.key===" ")attack();if(e.key.toLowerCase()==="e")talk();if(e.key.toLowerCase()==="h")potion()});
 window.addEventListener("keyup",e=>keys.delete(e.key.toLowerCase()));
 function circle(x,y,r,color){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
