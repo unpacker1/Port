@@ -1,0 +1,105 @@
+name: TieruYT Playerbots ARM64 and WebClient audit
+
+on:
+  push:
+    branches:
+      - tieruyt-playerbots-arm64-web-audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone-cpp-unit-tests:
+    name: Native C++ policy tests / ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Fetch public MIT-era sources on runner only
+        run: git clone --quiet --depth 1 --branch v2.2.16 https://github.com/TieruYT/metin2-playerbots.git upstream
+      - name: Compile and execute upstream C++ standalone tests
+        shell: bash
+        run: |
+          set -uo pipefail
+          cd upstream
+          mkdir -p /tmp/playerbots-test-bin
+          ok=0
+          fail=0
+          for name in channel_rules empire_rules event_rules lure_order_rules offline_policy offline_scan persona_rules progression_needs shop_name_rules stall_rules truce_rules world_rules arrange_rules conversation; do
+            src="tests/playerbot_${name}_test.cpp"
+            exe="/tmp/playerbots-test-bin/${name}"
+            echo "::group::${name}"
+            if g++ -std=c++17 -O0 -Wall -Wextra -I linux-port/overlays/playerbot/src/game/src "$src" -o "$exe" 2>&1; then
+              if "$exe"; then
+                echo "PASS ${name}"
+                ok=$((ok+1))
+              else
+                echo "RUN_FAIL ${name}"
+                fail=$((fail+1))
+              fi
+            else
+              echo "BUILD_FAIL ${name}"
+              fail=$((fail+1))
+            fi
+            echo "::endgroup::"
+          done
+          echo "## TieruYT v2.2.16 C++ tests / $(uname -m)" >> "$GITHUB_STEP_SUMMARY"
+          echo "PASS=${ok}, FAIL=${fail} (14 test targets)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source: https://github.com/TieruYT/metin2-playerbots/tree/v2.2.16" >> "$GITHUB_STEP_SUMMARY"
+          test "$fail" -eq 0
+
+  arm64-webclient-static-audit:
+    name: ARM64 / WebClient source audit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Read public source and current manifest (remote runner)
+        run: |
+          git clone --quiet --depth 1 --branch v2.2.16 https://github.com/TieruYT/metin2-playerbots.git upstream
+          curl -fsSL https://raw.githubusercontent.com/TieruYT/metin2-playerbots/main/update-manifest-mt2009.json -o manifest-current.json
+      - name: Verify portability blockers and publish JSON evidence
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("upstream")
+          art=json.loads((root/"artifacts.json").read_text(encoding="utf-8"))
+          latest=json.loads(Path("manifest-current.json").read_text(encoding="utf-8"))
+          docker=(root/"linux-port-mt2009/docker/game/Dockerfile").read_text(encoding="utf-8")
+          checks={
+              "mit_era_bot_cpp_exists":(root/"linux-port/overlays/playerbot/src/game/src/playerbot_manager.cpp").exists(),
+              "i386_32_bit_build_requires_port":("Linux/i386" in docker and "-m32" in docker),
+              "webclient_retired_and_not_shipped":("does not distribute, fetch, update, or support the browser client" in art.get("_engine","")),
+              "webclient_binary_url_unset":not art.get("engine_url"),
+              "game_server_source_not_in_repo":not (root/"linux-port-mt2009/docker/game/src/server").exists(),
+              "current_client_is_windows_x64":latest.get("client",{}).get("architecture")=="x64" and latest.get("client",{}).get("requiresClientExe"),
+          }
+          report={
+              "tested_ref":"v2.2.16",
+              "current_release_version":latest.get("server",{}).get("version"),
+              "current_client_version":latest.get("client",{}).get("version"),
+              "results":checks,
+              "scope":"static compatibility audit; not a full GAME build, not a running WebClient test",
+          }
+          Path("tieruyt-playerbots-audit.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
+          print(json.dumps(report,indent=2,ensure_ascii=False))
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"],"a") as f:
+              f.write("## ARM64 and WebClient audit\n\n")
+              for key,val in checks.items():
+                  f.write(f"- {key}: **{val}**\n")
+              f.write("\nThese checks establish blockers; they do not prove the engine is ARM64 compatible.\n")
+          assert all(checks.values()), "Expected source facts changed: review upstream"
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tieruyt-playerbots-static-audit
+          path: tieruyt-playerbots-audit.json
+          if-no-files-found: ignore
