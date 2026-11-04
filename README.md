@@ -1,19 +1,26 @@
 # Metin2 Playerbots — ARM64 / WebClient GitHub Laboratuvarı
 
-> **Çalışan bir mobil oyun değildir.** Bu dal, TieruYT/metin2-playerbots projesinin **MIT lisanslı v2.2.16 kaynak kodunu** değişiklik yapmadan referanslayan ve x86_64 / ARM64 testlerini otomatik çalıştıran açık bir araştırma laboratuvarıdır.
+> **Çalışan bir mobil oyun değildir.** Bu dal, TieruYT/metin2-playerbots'un MIT lisanslı `v2.2.16` kaynaklarına sabitlenmiş bir Git submodule ve otomatik platform testleri içeren açık bir araştırma laboratuvarıdır.
 
-**Ana başlangıç:** [Türkçe proje rehberi](playerbots-lab/README_TR.md) · [Güncel durum](playerbots-lab/STATUS_TR.md) · [Kaynak ve lisans](playerbots-lab/NOTICE_TR.md)
+## Son test sonuçları (4 Kasım 2026)
+- **Linux x86_64 C++ testleri:** 14/14 başarılı.
+- **Gerçek Linux ARM64 C++ testleri:** 14/14 başarılı.
+- **İstemci/mock Python ve shell testleri:** 6/6 başarılı.
+- **Kaynak/platform statik denetimi:** 8/8 beklenen olgu doğrulandı.
+- **Kaynak envanteri:** 7.301 dosya (kod + varlık + belge), 85 playerbot başlık dosyası.
+- **GAME/DB/AUTH'nin ARM64 üzerinde gerçekten çalışması ve WebClient ile oynanış:** Henüz doğrulanmadı.
 
-**Testler:** [GitHub Actions](https://github.com/unpacker1/Port/actions/workflows/tieruyt-playerbots-audit.yml) · [İlk doğrulanmış 28/28 test](https://github.com/unpacker1/Port/actions/runs/41872272857)
+**Çalışma:** [Tamamlanan GitHub Actions #41874659407](https://github.com/unpacker1/Port/actions/runs/41874659407) · [Test artefaktları](https://github.com/unpacker1/Port/actions/runs/41874659407#artifacts)
 
-**Kaynak:** [TieruYT/metin2-playerbots v2.2.16](https://github.com/TieruYT/metin2-playerbots/tree/v2.2.16)
+**Belgeler:** [Türkçe proje rehberi](playerbots-lab/README_TR.md) · [Ayrıntılı durum](playerbots-lab/STATUS_TR.md) · [Mimari](playerbots-lab/ARCHITECTURE_TR.md) · [Lisans](playerbots-lab/NOTICE_TR.md)
 
-### İçerik
+**Upstream:** [TieruYT/metin2-playerbots v2.2.16](https://github.com/TieruYT/metin2-playerbots/tree/v2.2.16)
 
-- `playerbots-lab/upstream` — Git submodule olarak **sabitlenmiş** v2.2.16 kaynak ağacı. Yeniden dağıtım değil, kaynağa tam sürüm bağlantısıdır.
-- `playerbots-lab/tools/` — C++ politika testleri, Python istemci birim testleri ve statik uyumluluk denetleyicisi.
-- `.github/workflows/tieruyt-playerbots-audit.yml` — bulutta x86_64 / gerçek ARM64 testleri, rapor artefaktları.
-- `playerbots-lab/ARCHITECTURE_TR.md` — GAME, bot AI, SQL, istemci ve protokol sınırları.
-- `playerbots-lab/STATUS_TR.md` — kanıtlanmış sonuçlar, engeller ve sonraki doğrulama kapıları.
+## Depodaki bileşenler
+- `playerbots-lab/upstream` — v2.2.16 sürümüne sabitlenmiş kaynak submodule (orijinal dosyalara bağlantı, yeniden dağıtım değil).
+- `playerbots-lab/tools/run_cpp_tests.py` — x86_64/ARM64 için 14 C++ davranış testi.
+- `playerbots-lab/tools/run_client_tests.py` — Python istemci mock ve shell migrator testleri.
+- `playerbots-lab/tools/audit.py` — kaynak envanteri ve ARM64/WebClient engel analizi, JSON/Markdown raporu.
+- `.github/workflows/tieruyt-playerbots-audit.yml` — GitHub CI pipeline, sonuç artefaktları.
 
-**Güvenlik:** Eski oyun dosyaları, MariaDB parolaları, kişisel veriler ve özel repolar bu dalın parçası değildir. Port.py eski ana deponun dosyasıdır; Playerbots laboratuvarında kullanılmaz. Ana dal değiştirilmemiştir.
+**Sınır:** Termux projeleri, mevcut AUTH/DB/GAME sunucuları, private depolar, SQL verileri ve ana dal değiştirilmedi. `port.py` önceki ana depodan kalan ilgisiz dosyadır; laboratuvarda kullanılmaz.

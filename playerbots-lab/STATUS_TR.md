@@ -1,36 +1,47 @@
 # Durum, kanıtlar ve yapılacaklar
 
-Güncellendi: 2026-11-04.
+Güncellendi: 2026-11-04 UTC. **Tamamlanan son kapsamlı CI: [#41874659407](https://github.com/unpacker1/Port/actions/runs/41874659407) — success.**
 
-## Doğrudan doğrulanmış
-- [x] MIT-era `v2.2.16` kodu GitHub'dan erişilebilir (sabit commit: `47106704f5c4f049619db44235754ce3670cd87c`).
-- [x] Linux x86_64: 14/14 mevcut C++ davranış testi derlenip çalıştı.
-- [x] Linux ARM64: 14/14 mevcut C++ davranış testi derlenip çalıştı.
-- [x] Statik taramada altı kaynak/istemci/derleme bulgusu doğrulandı.
-- [x] İlk Actions koşusu: [#41872272857](https://github.com/unpacker1/Port/actions/runs/41872272857) — success.
-- [x] İkinci Actions koşusu: [#41872566324](https://github.com/unpacker1/Port/actions/runs/41872566324) — success.
+## Kaynakların tamamı bağlantılandı
+- Sabit MIT-era kaynak: TieruYT/metin2-playerbots `v2.2.16`.
+- Git submodule commit: `47106704f5c4f049619db44235754ce3670cd87c`.
+- CI envanteri: **7.301 dosya** (kaynak kodu, varlıklar, betikler, belgeler ve testler dahil), **85 bot başlık dosyası**, **14 bağımsız C++ test hedefi**.
+- Bu yöntem orijinal `v2.2.16` GitHub deposuna referans verir; güncel kapalı kaynak binaryleri veya özel oyun verilerini kopyalamaz.
 
-## Henüz kanıtlanmamış / başarılmadı
-- [ ] Tam Metin2 GAME/DB/AUTH motoru ARM64 derlemesi.
-- [ ] Termux/proot üzerinde servislerin açılması.
-- [ ] Gerçek karakter login / join / hareket.
-- [ ] Windows native istemci yerine tarayıcı istemcisi.
-- [ ] NPC ticareti, savaş, yürüme, yedekleme ve uzun süreli FPS kararlılığı.
+## Gerçek test sonuçları
+| Denetim | Çalıştırıldığı yer | Sonuç |
+|---|---|---|
+| 14 C++ politika testi | GitHub Linux x86_64 | **14/14 PASS** |
+| Aynı 14 C++ testi | GitHub Linux ARM64 | **14/14 PASS** |
+| 5 Python istemci mock + 1 Shell veritabanı migrator mock | GitHub Linux x86_64 | **6/6 PASS** |
+| 8 kaynak/platform olgusu | Sabitlenmiş eski kaynak + güncel public manifest | **8/8 doğrulandı** |
+| Tam ARM64 GAME + DB + AUTH | Gerçek sunucu | **Henüz test edilmedi** |
+| Termux / Android runtime | Telefon | **Henüz test edilmedi** |
+| WebClient oyuna login / hareket / NPC / savaş | Tarayıcı | **Henüz test edilmedi** |
 
-## Açık engeller
-- Eksik olan temel GAME engine, client ve SQL dosyalarının bir kısmı `artifacts.json` tarafından **harici** bekleniyor; kamu deposunda kaynak/ikili olarak yoklar.
-- mt2009 Dockerfile Linux/i386 + `-m32` hedefli; bu üretim paketi ARM64'e doğrudan uyumlu değil.
-- Güncel `v2.2.140` istemcisi Windows x64 EXE istiyor; retired WebClient bu proje tarafından dağıtılmıyor.
-- 2.2.17 sonrası kaynaklar yayımlanmıyor, CC BY-NC-ND dağıtım sınırları var.
+> **Ölçüm sınırı:** 34 başarılı izole test çalıştırması gerçek oyun sunucusunun veya WebClient'ın çalıştığını kanıtlamaz. Buradaki 8/8 statik tarama, bazı **engellerin mevcut olduğunu** doğrular; uyumluluğu doğrulamaz.
 
-## Sonraki teknik kapılar
-1. Bu laboratuvardaki bağımsız C++ ve Python/shell testlerini sürekli doğrula, artefaktları yayınla.
-2. Kullanım izni olan engine baseline olmadan **tam GAME build yapıldı** iddiasında bulunma.
-3. Kaynaklar yetkili biçimde hazır olduğunda ARM64 `build-deps` ve C++20 proje derlemesini deneyip gerçek hata listesini çıkar.
-4. Native login ve GAME hareket akışı ölçülünce yalnızca aynı protokolü konuşan yasal bir WebClient'ı adapte et.
-5. Her aşamayı ayrı port + ayrı DB + ayrı çalışma dizininde tut.
+## Geçmiş
+- [#41872272857](https://github.com/unpacker1/Port/actions/runs/41872272857): İlk C++ testleri 28/28 PASS.
+- [#41872566324](https://github.com/unpacker1/Port/actions/runs/41872566324): Tekrar doğrulama PASS.
+- [#41874659407](https://github.com/unpacker1/Port/actions/runs/41874659407): Kaynak submodule, C++ x86+ARM, Python/shell mock ve envanter birlikte PASS.
 
-## GitHub
-- [Proje dalı](https://github.com/unpacker1/Port/tree/tieruyt-playerbots-arm64-web-audit)
+## Engeller ve açık kapılar
+1. `artifacts.json` ve `linux-port-mt2009` üretim derlemesi için harici engine, SQL ve istemci dosyaları istiyor. Bunlar GitHub kaynak ağacında tam olarak yok.
+2. `linux-port-mt2009/docker/game/Dockerfile` Linux/i386 ve `-m32` kullanıyor; aarch64 GAME ikilisi henüz derlenmedi.
+3. Güncel `v2.2.140` istemcisi Windows x64 EXE istiyor. Proje, eski WebClient motorunu yayımlamıyor ve desteklemiyor.
+4. Android/Termux GAME server için uyumlu engine + tüm bağımlılıklar gerekir; bunun ardından AUTH/DB/GAME canlı testleri yapılabilir.
+5. Tarayıcı istemcisi ancak gerçek protokol karşılaştırması ve lisansça uygun WebClient kodu hazır olduğunda test edilebilir.
+
+## Sonraki gerçek doğrulama aşamaları
+- [ ] Yetkili/izinli engine baseline ve eşleşen SQL dosyalarını ayrı, **özel** çalışma ortamında sağla.
+- [ ] GAME için aarch64 derleme ve başlatma testlerini yap; gerçek derleyici hatalarını kaydet.
+- [ ] Ayrı DB ve portlarla AUTH login, karakter listesi, GAME join, hareket ve bot spawn testi.
+- [ ] Uyumlu WebClient üzerinde WebSocket/native protokol entegrasyonu.
+- [ ] Android Chrome üzerinden render, NPC shop, envanter, savaş ve performans testi.
+
+## Proje bağlantıları
+- [Ana proje dalı](https://github.com/unpacker1/Port/tree/tieruyt-playerbots-arm64-web-audit)
 - [CI dosyası](https://github.com/unpacker1/Port/blob/tieruyt-playerbots-arm64-web-audit/.github/workflows/tieruyt-playerbots-audit.yml)
-- [Eski rapor](../research/TIERUYT_PLAYERBOTS_ARM64_WEBCLIENT_RAPOR_TR.md)
+- [Teknik mimari](ARCHITECTURE_TR.md)
+- [Lisans ve sınırlar](NOTICE_TR.md)
