@@ -88,3 +88,11 @@ jobs:
           path: reports/wsbridge-loopback-tests.json
           if-no-files-found: warn
 
+
+  offline-browser-rpg:
+    name: Offline browser RPG syntax and smoke tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check standalone HTML game and JavaScript
+        run: python3 playerbots-lab/playable/test_game.py
