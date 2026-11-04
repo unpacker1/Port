@@ -1,0 +1,72 @@
+name: Playerbots recurring ARM64 quality gate
+
+on:
+  schedule:
+    # UTC: every six hours, offset from :00 to reduce GitHub queue congestion.
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/playerbots-periodic-ci.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playerbots-periodic-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test-and-audit:
+    name: Public Playerbots ${{ matrix.arch }} checks
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout isolated public research branch
+        uses: actions/checkout@v4
+        with:
+          ref: tieruyt-playerbots-arm64-web-audit
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Compile and run upstream standalone C++ tests
+        run: python3 playerbots-lab/tools/run_cpp_tests.py --upstream playerbots-lab/upstream --report-dir reports
+
+      - name: Run mock client and database migration tests
+        if: matrix.arch == 'x86_64'
+        run: python3 playerbots-lab/tools/run_client_tests.py --upstream playerbots-lab/upstream --report-dir reports
+
+      - name: Fetch public release manifest
+        if: matrix.arch == 'x86_64'
+        run: curl --fail --location --retry 3 --silent --show-error https://raw.githubusercontent.com/TieruYT/metin2-playerbots/main/update-manifest-mt2009.json -o current-manifest.json
+
+      - name: Audit source, ARM64 and WebClient blockers
+        if: matrix.arch == 'x86_64'
+        run: python3 playerbots-lab/tools/audit.py --upstream playerbots-lab/upstream --current-manifest current-manifest.json --report-dir reports
+
+      - name: Publish readable summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## Playerbots recurring quality gate — ${{ matrix.arch }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source branch: tieruyt-playerbots-arm64-web-audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "v2.2.16 upstream: git submodule pinned by the branch." >> "$GITHUB_STEP_SUMMARY"
+          echo "This tests isolated modules, not a running GAME, AUTH, DB or WebClient." >> "$GITHUB_STEP_SUMMARY"
+          echo "Reports are uploaded as artifacts." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload checks and evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: periodic-playerbots-${{ matrix.arch }}
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
