@@ -1,0 +1,3 @@
+[submodule "playerbots-lab/upstream"]
+	path = playerbots-lab/upstream
+	url = https://github.com/TieruYT/metin2-playerbots.git
