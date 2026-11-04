@@ -71,3 +71,20 @@ jobs:
             reports/compatibility-audit.json
             reports/compatibility-audit.md
           if-no-files-found: warn
+
+  legacy-ws-bridge:
+    name: Old WebSocket-to-TCP bridge isolated loopback tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Run bridge framing, routing, and loopback TCP echo tests
+        run: python3 playerbots-lab/tools/test_wsbridge.py --upstream playerbots-lab/upstream --report-dir reports
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: legacy-websocket-bridge-tests
+          path: reports/wsbridge-loopback-tests.json
+          if-no-files-found: warn
+
