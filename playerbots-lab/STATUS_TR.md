@@ -1,6 +1,6 @@
 # Durum, kanıtlar ve yapılacaklar
 
-Güncellendi: 2026-11-04 UTC. **Son başarılı genişletilmiş çalışma:** [#41876840784](https://github.com/unpacker1/Port/actions/runs/41876840784).
+Güncellendi: 2026-11-05. **Son doğrulanmış önceki genişletilmiş çalışma:** [#41891360466](https://github.com/unpacker1/Port/actions/runs/41891360466) (success). Yeni kaynak sözleşmesi testleri ayrı CI doğrulamasını bekliyor.
 
 ## Sürekli akış
 - [x] [Düzenli GitHub Actions](https://github.com/unpacker1/Port/blob/main/.github/workflows/playerbots-periodic-ci.yml) varsayılan dalda kuruldu: `23 */6 * * *` (UTC; altı saatte bir) ve isteğe bağlı manuel çalıştırma.
@@ -34,7 +34,7 @@ Sonuç: **40 bağımsız otomatik test çalıştırması başarılı.** Bunlar x
 - `playerbots-lab/tools/test_wsbridge.py`: WebSocket handshake → ikili frame → TCP sahte GAME → frame geri dönüşü ile gerçek soket testi. Host istekten değil sabit TARGET_HOST'tan alınıyor; DB/P2P portları yasak.
 - **Sınır:** Bu test, köprünün gerçek Metin2 native paketleriyle veya Android Chrome'da eksiksiz çalıştığını kanıtlamaz. Köprü bir protokol çeviricisi değildir.
 
-## Engeller
+## 2026-11-05: G3-A / G3-B kaynak-sözleşmesi regresyonu\n- `tools/test_portability_contracts.py` eklendi; sabitlenmiş v2.2.16 alt modülünden **3 ayrı Python testi** çalıştıracak şekilde genişletilmiş CI işine bağlandı. Bu testler gerçek ARM64 GAME derlemesi değil, kaynak değişirse uyarı veren statik regresyon kontrolleridir.\n- [G3-B] `upstream/linux-port-mt2009/docker/game/Dockerfile` **3–7**: Linux/i386 ve gcc -m32 hedefi; **96–97**: i386 OpenSSL arşivleri; **173**: ELF 32-bit Intel 80386 doğrulaması; **209–212**: quest derleyicisi `g++ -m32` ve ELF 32-bit kontrolü. Bunlar AArch64 native derlemesini engelleyen açık hedef/bağımlılık varsayımlarıdır.\n- [G3-A] `upstream/linux-port/docker/wsbridge/bin/ws2tcp.py` **99**: DB/P2P port yasakları; **141**: sabit hedef; **192–196**: port filtrelemesi; **505**: TCP bağlantısı yalnız `TARGET_HOST` adresine. Kaynak güvenliği incelemesi, kamuya açık dağıtımın güvenli olduğunu kanıtlamaz.\n- [G3-A] `upstream/wasm-port/scripts/fix_ws_proxy_host.py` **44–73**: URL `serverTLS` ve `serverHost` değerleriyle eski JS shim'inin hedef hostu; **84–95**: beklenen metin yoksa değişiklik yapmayı reddeden koruma. Eski WASM/oyun dosyaları depoda yok.\n- **Kanıt sınırı:** Yeni testlerin geçişi yalnızca GitHub Actions tamamlandıktan sonra doğrulanmış sayılır. `main`, SQL, cihaz veya private depolar değiştirilmedi.\n\n## Engeller
 1. r40250/mt2009 baseline GAME + istemci/veri + SQL paketlerinin bir kısmı bu public kaynakta yok; yasa/izin çerçevesinde sağlanmaları gerekir.
 2. `linux-port-mt2009/docker/game/Dockerfile`: `-m32` ve Linux/i386, dolayısıyla ARM64 GAME doğrudan derlenmedi.
 3. Windows native istemcisi tarayıcıda çalışmaz; eski WASM dağıtımının kod/veri dosyaları temin edilmeden tarayıcı oynanışı yok.
