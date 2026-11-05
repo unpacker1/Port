@@ -1,0 +1,71 @@
+name: REA static evidence bridge
+
+on:
+  push:
+    branches:
+      - rea-readonly-bridge-20261105
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+
+      - name: Use supported Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Extract existing inline JavaScript as analysis input
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          source = Path("playerbots-lab/playable/index.html")
+          output = Path("rea-analysis-input")
+          output.mkdir(exist_ok=True)
+          html = source.read_text(encoding="utf-8")
+          scripts = re.findall(r"<script\b[^>]*>(.*?)</script\s*>", html, flags=re.I | re.S)
+          if not scripts:
+              raise SystemExit("No inline JavaScript found in playerbots-lab/playable/index.html")
+          for index, script in enumerate(scripts, start=1):
+              (output / f"inline-script-{index}.js").write_text(script, encoding="utf-8")
+          print(f"Prepared {len(scripts)} JavaScript script(s) for static analysis")
+          PY
+
+      - name: Install pinned REA CLI
+        run: npm install --global rea-agents@6.8.0
+
+      - name: Collect REA environment evidence
+        run: |
+          mkdir -p rea-reports
+          node -v > rea-reports/node-version.txt
+          rea --help > rea-reports/cli-help.txt
+          rea doctor --json > rea-reports/doctor.json 2> rea-reports/doctor-stderr.txt || true
+
+      - name: Run read-only JavaScript analysis
+        id: run_analysis
+        shell: bash
+        run: |
+          set +e
+          rea analyze-javascript-application "$PWD/rea-analysis-input" --json > rea-reports/analysis.json 2> rea-reports/analysis-stderr.txt
+          status=$?
+          printf '%s\n' "$status" > rea-reports/analysis-exit-code.txt
+          echo "REA exit code: $status" >> "$GITHUB_STEP_SUMMARY"
+          echo "Analysis target: extracted inline scripts from playerbots-lab/playable/index.html" >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Upload evidence even if analysis fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rea-playerbots-static-evidence
+          path: rea-reports/
+          retention-days: 14
+          if-no-files-found: warn
