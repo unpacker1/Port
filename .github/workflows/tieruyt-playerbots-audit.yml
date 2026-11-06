@@ -98,3 +98,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check standalone HTML game and JavaScript
         run: python3 playerbots-lab/playable/test_game.py
+
+  webgl-3d-source-contract:
+    name: Isolated WebGL 3D renderer source contract
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify WebGL 3D terrain, lighting, controls and honest offline status
+        run: python3 playerbots-lab/3d-world/test_3d_contract.py
