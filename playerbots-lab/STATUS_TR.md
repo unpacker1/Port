@@ -49,3 +49,10 @@ Sonuç: **40 bağımsız otomatik test çalıştırması başarılı.** Bunlar x
 - [ ] [G7] Lisans bakımından uygun WebClient ve gerçek oyun paketleri ile Android Chrome doğrulaması.
 
 [Proje dalı](https://github.com/unpacker1/Port/tree/tieruyt-playerbots-arm64-web-audit) · [GitHub issue #1](https://github.com/unpacker1/Port/issues/1) · [CI](https://github.com/unpacker1/Port/actions/workflows/tieruyt-playerbots-audit.yml) · [Mimari](ARCHITECTURE_TR.md)
+
+
+## 2026-11-06: izole 3D renderer regresyon kapısı
+- `3d-world/index.html` mevcut WebGL/Three.js prototipidir: prosedürel terrain, ilkel geometrili karakter, mobil yön tuşları, kamera, ışık ve gölge. **Orijinal Metin2 harita, model, rig, animasyon veya HD doku varlıkları değildir.**
+- `3d-world/test_3d_contract.py`: 5 kaynak sözleşmesi testi; WebGL renderer, terrain, mobil kontroller, ışık/gölge ve AUTH/GAME bağlantısının bulunmadığına dair açık UI uyarısı.
+- `.github/workflows/tieruyt-playerbots-audit.yml`: `webgl-3d-source-contract` işi eklendi. Bu testler tarayıcı FPS veya WebGL gerçek render doğrulaması yerine geçmez; CI tamamlanmadan PASS iddiası yoktur.
+- Sıradaki iş: tarayıcıda WebGL2 capability/context-loss ve cihaz FPS raporu; ardından izinli GLB animasyonlu model yükleme. Gerçek AUTH/DB/GAME entegrasyonu hâlâ engelli.
